@@ -399,12 +399,13 @@ private:
                 newRoot->layer = root->layer + 1;
                 newRoot->keynum = 0;
                 newRoot->child[0] = root;
-                splitNode(newRoot,0);
+                root = newRoot;
                 for(int i = 0; i < eleCount; i++){
                     memcpy(linklist[i] + root->layer *sizeLinkList, linklist[i] + (root->layer - 1) *sizeLinkList, sizeLinkList);
                 }
-//                refresh(newRoot);
-                root = newRoot;
+                splitNode(newRoot,0);
+                // refresh(newRoot);
+                // root = newRoot;
             }
         }
     }
