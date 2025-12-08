@@ -34,19 +34,27 @@ int main(int argc, char** argv) {
     vector<int> values;
     string line;
     int line_number = 0;
+    bool first_line = true;
     
     while (getline(infile, line)) {
         line_number++;
         
-        // Skip header line
-        if (line_number == 1) {
-            cout << "Skipping header: " << line << endl;
-            continue;
-        }
-        
         // Skip empty lines
         if (line.empty()) {
             continue;
+        }
+        
+        // Check if first line is a header (contains non-numeric text)
+        if (first_line) {
+            first_line = false;
+            stringstream test_ss(line);
+            int test_value;
+            if (!(test_ss >> test_value)) {
+                // First line is not a number, it's a header - skip it
+                cout << "Skipping header: " << line << endl;
+                continue;
+            }
+            // First line is a number, process it normally
         }
         
         // Parse integer value
