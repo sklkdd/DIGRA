@@ -80,60 +80,97 @@ int main(int argc, char** argv) {
     cout << "Parameters: dim=" << dim << ", k=" << k << ", M=" << M << ", ef_search=" << ef_search << endl;
 
     // ========== DATA LOADING (NOT TIMED) ==========
-    cout << "\nLoading data..." << endl;
+    cout << "\n========================================" << endl;
+    cout << "DEBUG: Starting data loading phase" << endl;
+    cout << "========================================" << endl;
     
     // Load database vectors using DIGRA's load_data function
     // Note: load_data takes num/dim by VALUE (not reference), so we calculate counts ourselves
     float* data = nullptr;
     
     // Calculate database vector count from file
+    cout << "DEBUG: Opening database file: " << data_path << endl;
     ifstream data_file(data_path, ios::binary);
     if (!data_file.is_open()) {
-        cerr << "Error: Cannot open data file: " << data_path << endl;
+        cerr << "ERROR: Cannot open data file: " << data_path << endl;
         return 1;
     }
+    cout << "DEBUG: Database file opened successfully" << endl;
+    
     int file_dim;
     data_file.read((char*)&file_dim, 4);
+    cout << "DEBUG: Read dimension from database file: " << file_dim << endl;
+    cout << "DEBUG: Expected dimension (from args): " << dim << endl;
+    
     if (file_dim != dim) {
-        cerr << "Error: Dimension mismatch in data. Expected " << dim << ", got " << file_dim << endl;
+        cerr << "ERROR: Dimension mismatch in data. Expected " << dim << ", got " << file_dim << endl;
         data_file.close();
         return 1;
     }
+    cout << "DEBUG: Database dimension validation PASSED" << endl;
+    
     data_file.seekg(0, ios::end);
     size_t data_fsize = data_file.tellg();
+    cout << "DEBUG: Database file size: " << data_fsize << " bytes" << endl;
     int baseNum = (unsigned)(data_fsize / (file_dim + 1) / 4);
+    cout << "DEBUG: Calculated baseNum: " << baseNum << endl;
     data_file.close();
     
     // Load data using DIGRA's function
+    cout << "DEBUG: Calling load_data() for database vectors..." << endl;
     int dummy_num = 0, dummy_dim = 0;
     load_data(data_path.c_str(), data, dummy_num, dummy_dim);
-    cout << "Loaded " << baseNum << " database vectors" << endl;
+    cout << "DEBUG: load_data() completed for database" << endl;
+    cout << "DEBUG: data pointer: " << (void*)data << endl;
+    
+    if (data == nullptr) {
+        cerr << "ERROR: load_data() returned null pointer for database!" << endl;
+        return 1;
+    }
 
     // Load query vectors
     float* query = nullptr;
     
     // Calculate query vector count from file
+    cout << "\nDEBUG: Opening query file: " << query_path << endl;
     ifstream query_file(query_path, ios::binary);
     if (!query_file.is_open()) {
-        cerr << "Error: Cannot open query file: " << query_path << endl;
+        cerr << "ERROR: Cannot open query file: " << query_path << endl;
         delete[] data;
         return 1;
     }
+    cout << "DEBUG: Query file opened successfully" << endl;
+    
     query_file.read((char*)&file_dim, 4);
+    cout << "DEBUG: Read dimension from query file: " << file_dim << endl;
+    
     if (file_dim != dim) {
-        cerr << "Error: Dimension mismatch in queries. Expected " << dim << ", got " << file_dim << endl;
+        cerr << "ERROR: Dimension mismatch in queries. Expected " << dim << ", got " << file_dim << endl;
         query_file.close();
         delete[] data;
         return 1;
     }
+    cout << "DEBUG: Query dimension validation PASSED" << endl;
+    
     query_file.seekg(0, ios::end);
     size_t query_fsize = query_file.tellg();
+    cout << "DEBUG: Query file size: " << query_fsize << " bytes" << endl;
     int queryNum = (unsigned)(query_fsize / (file_dim + 1) / 4);
+    cout << "DEBUG: Calculated queryNum: " << queryNum << endl;
     query_file.close();
     
     // Load queries using DIGRA's function
+    cout << "DEBUG: Calling load_data() for query vectors..." << endl;
     load_data(query_path.c_str(), query, dummy_num, dummy_dim);
-    cout << "Loaded " << queryNum << " query vectors" << endl;
+    cout << "DEBUG: load_data() completed for queries" << endl;
+    cout << "DEBUG: query pointer: " << (void*)query << endl;
+    
+    if (query == nullptr) {
+        cerr << "ERROR: load_data() returned null pointer for queries!" << endl;
+        delete[] data;
+        return 1;
+    }
+    cout << "DEBUG: Successfully loaded " << baseNum << " database and " << queryNum << " query vectors" << endl;
 
     // Load attributes
     int* keys = new int[baseNum];
@@ -191,22 +228,41 @@ int main(int argc, char** argv) {
     cout << "Loaded groundtruth" << endl;
 
     // ========== INDEX RECONSTRUCTION (NOT TIMED) ==========
-    cout << "\nRebuilding index (NOT TIMED)..." << endl;
+    cout << "\n========================================" << endl;
+    cout << "DEBUG: Starting index reconstruction phase" << endl;
+    cout << "========================================" << endl;
+    
     // Note: ef_construction is not provided, using a reasonable default
     int ef_construction = max(200, ef_search * 2);
+    cout << "DEBUG: Using ef_construction = " << ef_construction << " (max of 200 and " << (ef_search * 2) << ")" << endl;
+    
+    cout << "DEBUG: Constructor parameters:" << endl;
+    cout << "DEBUG:   dim = " << dim << endl;
+    cout << "DEBUG:   baseNum = " << baseNum << endl;
+    cout << "DEBUG:   maxBaseNum = " << baseNum << endl;
+    cout << "DEBUG:   data = " << (void*)data << endl;
+    cout << "DEBUG:   keys = " << (void*)keys << endl;
+    cout << "DEBUG:   values = " << (void*)values << endl;
+    cout << "DEBUG:   M = " << M << endl;
+    cout << "DEBUG:   ef_construction = " << ef_construction << endl;
     
     RangeHNSW* rangeHnsw = nullptr;
+    cout << "DEBUG: About to call RangeHNSW constructor..." << endl;
+    cout << flush;  // Force flush
+    
     try {
         rangeHnsw = new RangeHNSW(dim, baseNum, baseNum, data, keys, values, M, ef_construction);
+        cout << "DEBUG: RangeHNSW constructor completed successfully!" << endl;
+        cout << "DEBUG: rangeHnsw pointer = " << (void*)rangeHnsw << endl;
     } catch (const exception& e) {
-        cerr << "Error during index reconstruction: " << e.what() << endl;
+        cerr << "\nERROR: C++ exception during index reconstruction: " << e.what() << endl;
         delete[] data;
         delete[] query;
         delete[] keys;
         delete[] values;
         return 1;
     } catch (...) {
-        cerr << "Unknown error during index reconstruction" << endl;
+        cerr << "\nERROR: Unknown exception during index reconstruction" << endl;
         delete[] data;
         delete[] query;
         delete[] keys;
@@ -214,7 +270,7 @@ int main(int argc, char** argv) {
         return 1;
     }
     
-    cout << "Index rebuilt with M=" << M << ", ef_construction=" << ef_construction << endl;
+    cout << "DEBUG: Index reconstruction completed successfully" << endl;
 
     // ========== QUERY EXECUTION (TIMED, excludes recall computation) ==========
     cout << "\n--- Starting query execution (TIMED) ---" << endl;
