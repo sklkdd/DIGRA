@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
     float* data = nullptr;
     
     // load_data will allocate and set the data pointer, and modify count variables
-    int actual_count = baseNum;  // Will be overwritten by load_data
+    int actual_count = 0;        // Will be set by load_data
     int actual_dim = dim;        // Will be overwritten by load_data
     load_data(data_fvecs.c_str(), data, actual_count, actual_dim);
     
@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
         return 1;
     }
     
-    baseNum = actual_count;  // Use the actual count from file
+    int baseNum = actual_count;  // Use the actual count from file
     cout << "Loaded " << baseNum << " vectors of dimension " << dim << endl;
 
     // Load attributes from .data file
