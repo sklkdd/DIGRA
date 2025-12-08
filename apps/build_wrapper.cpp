@@ -55,21 +55,40 @@ int main(int argc, char** argv) {
     cout << "\nLoading data..." << endl;
     
     // Load vectors using DIGRA's load_data function
+    // Note: load_data takes num/dim by VALUE (not reference), so we need to calculate count ourselves
     float* data = nullptr;
     
-    // load_data will allocate and set the data pointer, and modify count variables
-    int actual_count = 0;        // Will be set by load_data
-    int actual_dim = dim;        // Will be overwritten by load_data
-    load_data(data_fvecs.c_str(), data, actual_count, actual_dim);
-    
-    if (actual_dim != dim) {
-        cerr << "Error: Dimension mismatch. Expected " << dim << ", got " << actual_dim << endl;
-        delete[] data;
+    // First, manually read the file to get the actual vector count
+    ifstream data_file(data_fvecs, ios::binary);
+    if (!data_file.is_open()) {
+        cerr << "Error: Cannot open data file: " << data_fvecs << endl;
         return 1;
     }
     
-    int baseNum = actual_count;  // Use the actual count from file
-    cout << "Loaded " << baseNum << " vectors of dimension " << dim << endl;
+    // Read dimension from first vector
+    int file_dim;
+    data_file.read((char*)&file_dim, 4);
+    if (file_dim != dim) {
+        cerr << "Error: Dimension mismatch. Expected " << dim << ", got " << file_dim << endl;
+        data_file.close();
+        return 1;
+    }
+    
+    // Calculate number of vectors from file size
+    data_file.seekg(0, ios::end);
+    size_t fsize = data_file.tellg();
+    int baseNum = (unsigned)(fsize / (dim + 1) / 4);
+    data_file.close();
+    
+    cout << "File contains " << baseNum << " vectors of dimension " << dim << endl;
+    
+    // Now call load_data to actually allocate and read the data
+    // Pass dummy values for num/dim since load_data will recalculate them internally
+    int dummy_num = 0;
+    int dummy_dim = 0;
+    load_data(data_fvecs.c_str(), data, dummy_num, dummy_dim);
+    
+    cout << "Loaded " << baseNum << " vectors" << endl;
 
     // Load attributes from .data file
     int* keys = new int[baseNum];
