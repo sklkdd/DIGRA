@@ -202,9 +202,22 @@ int main(int argc, char** argv) {
     cout << "Loaded " << count << " attributes" << endl;
 
     // Load query ranges
-    vector<pair<int, int>> query_ranges = read_two_ints_per_line(query_ranges_file);
-    if (query_ranges.size() != queryNum) {
-        cerr << "Error: Number of query ranges (" << query_ranges.size() 
+    cout << "\nDEBUG: Loading query ranges from: " << query_ranges_file << endl;
+    vector<pair<int, int>> query_ranges;
+    try {
+        query_ranges = read_two_ints_per_line(query_ranges_file);
+        cout << "DEBUG: Successfully read " << query_ranges.size() << " query ranges" << endl;
+    } catch (const exception& e) {
+        cerr << "ERROR: Failed to read query ranges: " << e.what() << endl;
+        delete[] data;
+        delete[] query;
+        delete[] keys;
+        delete[] values;
+        return 1;
+    }
+    
+    if (query_ranges.size() != (size_t)queryNum) {
+        cerr << "ERROR: Number of query ranges (" << query_ranges.size() 
              << ") != number of queries (" << queryNum << ")\n";
         delete[] data;
         delete[] query;
@@ -212,12 +225,25 @@ int main(int argc, char** argv) {
         delete[] values;
         return 1;
     }
-    cout << "Loaded " << query_ranges.size() << " query ranges" << endl;
+    cout << "DEBUG: Query ranges count validation PASSED" << endl;
 
     // Load groundtruth
-    vector<vector<int>> groundtruth = read_ivecs(groundtruth_file);
-    if (groundtruth.size() != queryNum) {
-        cerr << "Error: Number of groundtruth entries (" << groundtruth.size() 
+    cout << "\nDEBUG: Loading groundtruth from: " << groundtruth_file << endl;
+    vector<vector<int>> groundtruth;
+    try {
+        groundtruth = read_ivecs(groundtruth_file);
+        cout << "DEBUG: Successfully read " << groundtruth.size() << " groundtruth entries" << endl;
+    } catch (const exception& e) {
+        cerr << "ERROR: Failed to read groundtruth: " << e.what() << endl;
+        delete[] data;
+        delete[] query;
+        delete[] keys;
+        delete[] values;
+        return 1;
+    }
+    
+    if (groundtruth.size() != (size_t)queryNum) {
+        cerr << "ERROR: Number of groundtruth entries (" << groundtruth.size() 
              << ") != number of queries (" << queryNum << ")\n";
         delete[] data;
         delete[] query;
@@ -225,7 +251,7 @@ int main(int argc, char** argv) {
         delete[] values;
         return 1;
     }
-    cout << "Loaded groundtruth" << endl;
+    cout << "DEBUG: Groundtruth count validation PASSED" << endl;
 
     // ========== INDEX RECONSTRUCTION (NOT TIMED) ==========
     cout << "\n========================================" << endl;
