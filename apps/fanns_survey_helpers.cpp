@@ -33,20 +33,30 @@ std::vector<std::vector<float>> read_fvecs(const std::string& filename) {
 }
 
 std::vector<std::vector<int>> read_ivecs(const std::string& filename) {
+    std::cout << "DEBUG: read_ivecs() called with: " << filename << std::endl;
     std::ifstream file(filename, std::ios::binary);
+    std::cout << "DEBUG: ifstream created (binary mode)" << std::endl;
     if (!file) {
+        std::cerr << "DEBUG: File failed to open!" << std::endl;
         std::cerr << "Error: Unable to open file for reading.\n";
         return {};
     }
+    std::cout << "DEBUG: File opened successfully" << std::endl;
     std::vector<std::vector<int>> dataset;
+    int count = 0;
     while (file) {
         int d;
         if (!file.read(reinterpret_cast<char*>(&d), sizeof(int))) break;  // Read dimension
         std::vector<int> vec(d);
         if (!file.read(reinterpret_cast<char*>(vec.data()), d * sizeof(int))) break;  // Read vector data
         dataset.push_back(std::move(vec));
+        ++count;
+        if (count % 1000 == 0) {
+            std::cout << "DEBUG: Loaded " << count << " groundtruth entries..." << std::endl;
+        }
     }
     file.close();
+    std::cout << "DEBUG: Finished reading file. Total entries: " << count << std::endl;
     return dataset;
 }
 
@@ -118,16 +128,24 @@ std::vector<std::vector<int>> read_multiple_ints_per_line(const std::string& fil
 }
 
 std::vector<std::pair<int, int>> read_two_ints_per_line(const std::string& filename) {
+    std::cout << "DEBUG: read_two_ints_per_line() called with: " << filename << std::endl;
     std::ifstream file(filename);
+    std::cout << "DEBUG: ifstream created" << std::endl;
     if (!file.is_open()) {
+        std::cout << "DEBUG: File failed to open!" << std::endl;
         throw std::runtime_error("Error opening file: " + filename);
     }
+    std::cout << "DEBUG: File opened successfully" << std::endl;
     std::vector<std::pair<int, int>> result;
     std::string line;
     int line_number = 0;
     bool first_line = true;
+    std::cout << "DEBUG: Starting while loop to read lines..." << std::endl;
     while (std::getline(file, line)) {
         ++line_number;
+        if (line_number % 1000 == 0) {
+            std::cout << "DEBUG: Processed " << line_number << " lines..." << std::endl;
+        }
         // Skip empty lines
         if (line.empty()) {
             continue;
@@ -161,6 +179,7 @@ std::vector<std::pair<int, int>> read_two_ints_per_line(const std::string& filen
             throw std::runtime_error("Invalid integer value at line " + std::to_string(line_number));
         }
     }
+    std::cout << "DEBUG: Finished reading file. Total lines: " << line_number << ", result size: " << result.size() << std::endl;
     return result;
 }
 
