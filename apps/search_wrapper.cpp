@@ -194,7 +194,26 @@ int main(int argc, char** argv) {
     cout << "\nRebuilding index (NOT TIMED)..." << endl;
     // Note: ef_construction is not provided, using a reasonable default
     int ef_construction = max(200, ef_search * 2);
-    RangeHNSW rangeHnsw(dim, baseNum, baseNum, data, keys, values, M, ef_construction);
+    
+    RangeHNSW* rangeHnsw = nullptr;
+    try {
+        rangeHnsw = new RangeHNSW(dim, baseNum, baseNum, data, keys, values, M, ef_construction);
+    } catch (const exception& e) {
+        cerr << "Error during index reconstruction: " << e.what() << endl;
+        delete[] data;
+        delete[] query;
+        delete[] keys;
+        delete[] values;
+        return 1;
+    } catch (...) {
+        cerr << "Unknown error during index reconstruction" << endl;
+        delete[] data;
+        delete[] query;
+        delete[] keys;
+        delete[] values;
+        return 1;
+    }
+    
     cout << "Index rebuilt with M=" << M << ", ef_construction=" << ef_construction << endl;
 
     // ========== QUERY EXECUTION (TIMED, excludes recall computation) ==========
@@ -210,24 +229,46 @@ int main(int argc, char** argv) {
     auto start_time = high_resolution_clock::now();
 
     // Execute queries
-    for (int i = 0; i < queryNum; i++) {
-        int rangeL = query_ranges[i].first;
-        int rangeR = query_ranges[i].second;
-        
-        // Perform range-filtered query
-        // queryRange signature: queryRange(vecData, rangeL, rangeR, k, ef_s)
-        auto result = rangeHnsw.queryRange(query + i * dim, rangeL, rangeR, k, ef_search);
-        
-        // Extract IDs from priority queue
-        query_results[i].reserve(k);
-        while (!result.empty()) {
-            query_results[i].push_back(result.top().second);
-            result.pop();
+    try {
+        for (int i = 0; i < queryNum; i++) {
+            int rangeL = query_ranges[i].first;
+            int rangeR = query_ranges[i].second;
+            
+            // Perform range-filtered query
+            // queryRange signature: queryRange(vecData, rangeL, rangeR, k, ef_s)
+            auto result = rangeHnsw->queryRange(query + i * dim, rangeL, rangeR, k, ef_search);
+            
+            // Extract IDs from priority queue
+            query_results[i].reserve(k);
+            while (!result.empty()) {
+                query_results[i].push_back(result.top().second);
+                result.pop();
+            }
+            
+            if ((i + 1) % 1000 == 0) {
+                cout << "  Processed " << (i + 1) << " / " << queryNum << " queries" << endl;
+            }
         }
-        
-        if ((i + 1) % 1000 == 0) {
-            cout << "  Processed " << (i + 1) << " / " << queryNum << " queries" << endl;
-        }
+    } catch (const exception& e) {
+        cerr << "Error during query execution: " << e.what() << endl;
+        done_monitoring = true;
+        monitor_thread.join();
+        delete[] data;
+        delete[] query;
+        delete[] keys;
+        delete[] values;
+        if (rangeHnsw != nullptr) delete rangeHnsw;
+        return 1;
+    } catch (...) {
+        cerr << "Unknown error during query execution" << endl;
+        done_monitoring = true;
+        monitor_thread.join();
+        delete[] data;
+        delete[] query;
+        delete[] keys;
+        delete[] values;
+        if (rangeHnsw != nullptr) delete rangeHnsw;
+        return 1;
     }
 
     auto end_time = high_resolution_clock::now();
@@ -273,6 +314,9 @@ int main(int argc, char** argv) {
     delete[] query;
     delete[] keys;
     delete[] values;
+    if (rangeHnsw != nullptr) {
+        delete rangeHnsw;
+    }
 
     return 0;
 }
