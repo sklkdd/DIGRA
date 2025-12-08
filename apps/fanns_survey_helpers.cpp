@@ -58,11 +58,23 @@ std::vector<int> read_one_int_per_line(const std::string& filename) {
     std::vector<int> result;
     std::string line;
     int line_number = 0;
+    bool first_line = true;
     while (std::getline(file, line)) {
         ++line_number;
-        // Skip header if present
-        if (line_number == 1 && (line == "attribute" || line.find_first_not_of("0123456789-") != std::string::npos)) {
+        // Skip empty lines
+        if (line.empty()) {
             continue;
+        }
+        // Check if first line is a header (non-numeric)
+        if (first_line) {
+            first_line = false;
+            std::stringstream test_ss(line);
+            int test_value;
+            if (!(test_ss >> test_value)) {
+                // First line is a header, skip it
+                continue;
+            }
+            // First line is numeric, process it normally
         }
         std::stringstream ss(line);
         int value;
@@ -113,15 +125,32 @@ std::vector<std::pair<int, int>> read_two_ints_per_line(const std::string& filen
     std::vector<std::pair<int, int>> result;
     std::string line;
     int line_number = 0;
+    bool first_line = true;
     while (std::getline(file, line)) {
         ++line_number;
-        // Skip header line if present (e.g., "low-high")
-        if (line_number == 1 && line.find_first_not_of("0123456789-") != std::string::npos) {
+        // Skip empty lines
+        if (line.empty()) {
             continue;
+        }
+        // Check if first line is a header by trying to parse it
+        if (first_line) {
+            first_line = false;
+            std::stringstream test_ss(line);
+            std::string test_first, test_second;
+            if (std::getline(test_ss, test_first, '-') && std::getline(test_ss, test_second)) {
+                try {
+                    std::stoi(test_first);
+                    std::stoi(test_second);
+                    // Successfully parsed as integers, not a header - process normally
+                } catch (...) {
+                    // Failed to parse as integers, it's a header - skip it
+                    continue;
+                }
+            }
         }
         std::stringstream ss(line);
         std::string first, second;
-        if (!std::getline(ss, first, '-') || !std::getline(ss, second) || !ss.eof()) {
+        if (!std::getline(ss, first, '-') || !std::getline(ss, second)) {
             throw std::runtime_error("Invalid format at line " + std::to_string(line_number));
         }
         try {
