@@ -83,34 +83,56 @@ int main(int argc, char** argv) {
     cout << "\nLoading data..." << endl;
     
     // Load database vectors using DIGRA's load_data function
+    // Note: load_data takes num/dim by VALUE (not reference), so we calculate counts ourselves
     float* data = nullptr;
-    int actual_base_count = 0;
-    int actual_base_dim = dim;
-    load_data(data_path.c_str(), data, actual_base_count, actual_base_dim);
     
-    if (actual_base_dim != dim) {
-        cerr << "Error: Dimension mismatch in data. Expected " << dim << ", got " << actual_base_dim << endl;
-        delete[] data;
+    // Calculate database vector count from file
+    ifstream data_file(data_path, ios::binary);
+    if (!data_file.is_open()) {
+        cerr << "Error: Cannot open data file: " << data_path << endl;
         return 1;
     }
+    int file_dim;
+    data_file.read((char*)&file_dim, 4);
+    if (file_dim != dim) {
+        cerr << "Error: Dimension mismatch in data. Expected " << dim << ", got " << file_dim << endl;
+        data_file.close();
+        return 1;
+    }
+    data_file.seekg(0, ios::end);
+    size_t data_fsize = data_file.tellg();
+    int baseNum = (unsigned)(data_fsize / (dim + 1) / 4);
+    data_file.close();
     
-    int baseNum = actual_base_count;
+    // Load data using DIGRA's function
+    int dummy_num = 0, dummy_dim = 0;
+    load_data(data_path.c_str(), data, dummy_num, dummy_dim);
     cout << "Loaded " << baseNum << " database vectors" << endl;
 
     // Load query vectors
     float* query = nullptr;
-    int actual_query_count = 0;
-    int actual_query_dim = dim;
-    load_data(query_path.c_str(), query, actual_query_count, actual_query_dim);
     
-    if (actual_query_dim != dim) {
-        cerr << "Error: Dimension mismatch in queries. Expected " << dim << ", got " << actual_query_dim << endl;
+    // Calculate query vector count from file
+    ifstream query_file(query_path, ios::binary);
+    if (!query_file.is_open()) {
+        cerr << "Error: Cannot open query file: " << query_path << endl;
         delete[] data;
-        delete[] query;
         return 1;
     }
+    query_file.read((char*)&file_dim, 4);
+    if (file_dim != dim) {
+        cerr << "Error: Dimension mismatch in queries. Expected " << dim << ", got " << file_dim << endl;
+        query_file.close();
+        delete[] data;
+        return 1;
+    }
+    query_file.seekg(0, ios::end);
+    size_t query_fsize = query_file.tellg();
+    int queryNum = (unsigned)(query_fsize / (dim + 1) / 4);
+    query_file.close();
     
-    int queryNum = actual_query_count;
+    // Load queries using DIGRA's function
+    load_data(query_path.c_str(), query, dummy_num, dummy_dim);
     cout << "Loaded " << queryNum << " query vectors" << endl;
 
     // Load attributes
