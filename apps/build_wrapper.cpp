@@ -56,30 +56,19 @@ int main(int argc, char** argv) {
     
     // Load vectors using DIGRA's load_data function
     float* data = nullptr;
-    int baseNum = 0;
     
-    // Count number of vectors in fvecs file
-    ifstream count_file(data_fvecs, ios::binary);
-    if (!count_file) {
-        cerr << "Error: Cannot open data file: " << data_fvecs << endl;
+    // load_data will allocate and set the data pointer, and modify count variables
+    int actual_count = baseNum;  // Will be overwritten by load_data
+    int actual_dim = dim;        // Will be overwritten by load_data
+    load_data(data_fvecs.c_str(), data, actual_count, actual_dim);
+    
+    if (actual_dim != dim) {
+        cerr << "Error: Dimension mismatch. Expected " << dim << ", got " << actual_dim << endl;
+        delete[] data;
         return 1;
     }
-    while (count_file) {
-        int d;
-        if (!count_file.read(reinterpret_cast<char*>(&d), sizeof(int))) break;
-        if (d != dim) {
-            cerr << "Error: Dimension mismatch in fvecs file" << endl;
-            return 1;
-        }
-        count_file.seekg(d * sizeof(float), ios::cur);
-        baseNum++;
-    }
-    count_file.close();
     
-    cout << "Found " << baseNum << " vectors" << endl;
-    
-    // Load vectors
-    load_data(data_fvecs.c_str(), data, baseNum, dim);
+    baseNum = actual_count;  // Use the actual count from file
     cout << "Loaded " << baseNum << " vectors of dimension " << dim << endl;
 
     // Load attributes from .data file
