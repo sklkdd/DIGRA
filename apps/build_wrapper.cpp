@@ -135,7 +135,26 @@ int main(int argc, char** argv) {
 
     // Construct DIGRA RangeHNSW index
     // Constructor signature: RangeHNSW(dim, baseNum, maxBaseNum, data, key, value, m, ef_construction)
-    RangeHNSW rangeHnsw(dim, baseNum, baseNum, data, keys, values, M, ef_construction);
+    RangeHNSW* rangeHnsw = nullptr;
+    try {
+        rangeHnsw = new RangeHNSW(dim, baseNum, baseNum, data, keys, values, M, ef_construction);
+    } catch (const exception& e) {
+        cerr << "Error during index construction: " << e.what() << endl;
+        done_monitoring = true;
+        monitor_thread.join();
+        delete[] data;
+        delete[] keys;
+        delete[] values;
+        return 1;
+    } catch (...) {
+        cerr << "Unknown error during index construction" << endl;
+        done_monitoring = true;
+        monitor_thread.join();
+        delete[] data;
+        delete[] keys;
+        delete[] values;
+        return 1;
+    }
     
     auto end_time = high_resolution_clock::now();
     
@@ -158,6 +177,9 @@ int main(int argc, char** argv) {
     delete[] data;
     delete[] keys;
     delete[] values;
+    if (rangeHnsw != nullptr) {
+        delete rangeHnsw;
+    }
 
     cout << "\nNote: DIGRA does not support index serialization." << endl;
     cout << "Index must be rebuilt for query phase." << endl;
