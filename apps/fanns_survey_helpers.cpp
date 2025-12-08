@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <utility>
 #include <omp.h>
+#include <cstdio>
 
 #include "global_thread_counter.h"
 
@@ -129,25 +130,59 @@ std::vector<std::vector<int>> read_multiple_ints_per_line(const std::string& fil
 
 std::vector<std::pair<int, int>> read_two_ints_per_line(const std::string& filename) {
     std::cout << "DEBUG: read_two_ints_per_line() called with: " << filename << std::endl;
+    
+    // TEST: Try C-style file reading first
+    std::cout << "DEBUG: Testing C-style file access..." << std::endl;
+    FILE* test_fp = fopen(filename.c_str(), "r");
+    if (test_fp) {
+        char test_buf[256];
+        if (fgets(test_buf, sizeof(test_buf), test_fp)) {
+            std::cout << "DEBUG: C-style read successful, first line: " << test_buf << std::endl;
+        } else {
+            std::cout << "DEBUG: C-style fgets() failed" << std::endl;
+        }
+        fclose(test_fp);
+    } else {
+        std::cout << "DEBUG: C-style fopen() failed" << std::endl;
+    }
+    
+    std::cout << "DEBUG: Creating ifstream..." << std::endl;
+    std::cout.flush();
     std::ifstream file(filename);
     std::cout << "DEBUG: ifstream created" << std::endl;
+    std::cout.flush();
     if (!file.is_open()) {
         std::cout << "DEBUG: File failed to open!" << std::endl;
         throw std::runtime_error("Error opening file: " + filename);
     }
     std::cout << "DEBUG: File opened successfully" << std::endl;
+    std::cout << "DEBUG: file.good() = " << file.good() << std::endl;
+    std::cout << "DEBUG: file.eof() = " << file.eof() << std::endl;
+    std::cout << "DEBUG: file.fail() = " << file.fail() << std::endl;
+    std::cout.flush();
+    
     std::vector<std::pair<int, int>> result;
     std::string line;
     int line_number = 0;
     bool first_line = true;
     std::cout << "DEBUG: Starting while loop to read lines..." << std::endl;
+    std::cout.flush();
+    
+    std::cout << "DEBUG: About to call std::getline() for first time..." << std::endl;
+    std::cout.flush();
     while (std::getline(file, line)) {
+        std::cout << "DEBUG: Inside while loop, line " << line_number + 1 << std::endl;
+        std::cout.flush();
         ++line_number;
+        if (line_number == 1) {
+            std::cout << "DEBUG: First line content: [" << line << "]" << std::endl;
+        }
         if (line_number % 1000 == 0) {
             std::cout << "DEBUG: Processed " << line_number << " lines..." << std::endl;
         }
         // Skip empty lines
         if (line.empty()) {
+            std::cout << "DEBUG: Skipping empty line " << line_number << std::endl;
             continue;
         }
         // Check if first line is a header by trying to parse it
