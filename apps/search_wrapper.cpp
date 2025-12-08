@@ -101,7 +101,7 @@ int main(int argc, char** argv) {
     }
     data_file.seekg(0, ios::end);
     size_t data_fsize = data_file.tellg();
-    int baseNum = (unsigned)(data_fsize / (dim + 1) / 4);
+    int baseNum = (unsigned)(data_fsize / (file_dim + 1) / 4);
     data_file.close();
     
     // Load data using DIGRA's function
@@ -128,7 +128,7 @@ int main(int argc, char** argv) {
     }
     query_file.seekg(0, ios::end);
     size_t query_fsize = query_file.tellg();
-    int queryNum = (unsigned)(query_fsize / (dim + 1) / 4);
+    int queryNum = (unsigned)(query_fsize / (file_dim + 1) / 4);
     query_file.close();
     
     // Load queries using DIGRA's function
