@@ -82,54 +82,35 @@ int main(int argc, char** argv) {
     // ========== DATA LOADING (NOT TIMED) ==========
     cout << "\nLoading data..." << endl;
     
-    // Load database vectors
+    // Load database vectors using DIGRA's load_data function
     float* data = nullptr;
-    int baseNum = 0;
+    int actual_base_count = 0;
+    int actual_base_dim = dim;
+    load_data(data_path.c_str(), data, actual_base_count, actual_base_dim);
     
-    ifstream count_file(data_path, ios::binary);
-    if (!count_file) {
-        cerr << "Error: Cannot open data file: " << data_path << endl;
+    if (actual_base_dim != dim) {
+        cerr << "Error: Dimension mismatch in data. Expected " << dim << ", got " << actual_base_dim << endl;
+        delete[] data;
         return 1;
     }
-    while (count_file) {
-        int d;
-        if (!count_file.read(reinterpret_cast<char*>(&d), sizeof(int))) break;
-        if (d != dim) {
-            cerr << "Error: Dimension mismatch in data fvecs file" << endl;
-            return 1;
-        }
-        count_file.seekg(d * sizeof(float), ios::cur);
-        baseNum++;
-    }
-    count_file.close();
     
-    load_data(data_path.c_str(), data, baseNum, dim);
+    int baseNum = actual_base_count;
     cout << "Loaded " << baseNum << " database vectors" << endl;
 
     // Load query vectors
     float* query = nullptr;
-    int queryNum = 0;
+    int actual_query_count = 0;
+    int actual_query_dim = dim;
+    load_data(query_path.c_str(), query, actual_query_count, actual_query_dim);
     
-    ifstream qcount_file(query_path, ios::binary);
-    if (!qcount_file) {
-        cerr << "Error: Cannot open query file: " << query_path << endl;
+    if (actual_query_dim != dim) {
+        cerr << "Error: Dimension mismatch in queries. Expected " << dim << ", got " << actual_query_dim << endl;
         delete[] data;
+        delete[] query;
         return 1;
     }
-    while (qcount_file) {
-        int d;
-        if (!qcount_file.read(reinterpret_cast<char*>(&d), sizeof(int))) break;
-        if (d != dim) {
-            cerr << "Error: Dimension mismatch in query fvecs file" << endl;
-            delete[] data;
-            return 1;
-        }
-        qcount_file.seekg(d * sizeof(float), ios::cur);
-        queryNum++;
-    }
-    qcount_file.close();
     
-    load_data(query_path.c_str(), query, queryNum, dim);
+    int queryNum = actual_query_count;
     cout << "Loaded " << queryNum << " query vectors" << endl;
 
     // Load attributes
