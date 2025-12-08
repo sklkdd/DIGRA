@@ -77,7 +77,7 @@ int main(int argc, char** argv) {
     // Calculate number of vectors from file size
     data_file.seekg(0, ios::end);
     size_t fsize = data_file.tellg();
-    int baseNum = (unsigned)(fsize / (dim + 1) / 4);
+    int baseNum = (unsigned)(fsize / (file_dim + 1) / 4);
     data_file.close();
     
     cout << "File contains " << baseNum << " vectors of dimension " << dim << endl;
