@@ -24,8 +24,6 @@ add_executable(build_wrapper apps/build_wrapper.cpp
         hnswlib/visited_list_pool.h
         utils.hpp
         TreeHNSW.hpp
-        apps/fanns_survey_helpers.cpp
-        apps/global_thread_counter.h
 )
 
 add_executable(search_wrapper apps/search_wrapper.cpp
@@ -34,6 +32,4 @@ add_executable(search_wrapper apps/search_wrapper.cpp
         hnswlib/visited_list_pool.h
         utils.hpp
         TreeHNSW.hpp
-        apps/fanns_survey_helpers.cpp
-        apps/global_thread_counter.h
 )
