@@ -20,7 +20,7 @@ using namespace std;
 using namespace std::chrono;
 
 int main(int argc, char** argv) {
-    if (argc != 15) {
+    if (argc != 19) {
         cerr << "Usage: " << argv[0] << " --data_path <data.fvecs> "
              << "--query_path <query.fvecs> --query_ranges_file <ranges.csv> "
              << "--groundtruth_file <gt.ivecs> --attributes_file <attrs.data> "
