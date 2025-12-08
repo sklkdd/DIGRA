@@ -9,6 +9,7 @@
 #include <chrono>
 #include <unistd.h>
 #include <utility>
+#include <omp.h>
 
 #include "global_thread_counter.h"
 
