@@ -14,3 +14,26 @@ add_executable(Digra main.cpp hnswlib/bruteforce.h hnswlib/hnswalg.h hnswlib/hns
         DataMaker.hpp
         TreeHNSW.hpp
 )
+
+# FANNS benchmarking wrappers
+add_executable(csv_to_data apps/csv_to_data_converter.cpp)
+
+add_executable(build_wrapper apps/build_wrapper.cpp
+        hnswlib/bruteforce.h hnswlib/hnswalg.h hnswlib/hnswlib.h 
+        hnswlib/space_ip.h hnswlib/space_l2.h hnswlib/stop_condition.h 
+        hnswlib/visited_list_pool.h
+        utils.hpp
+        TreeHNSW.hpp
+        apps/fanns_survey_helpers.cpp
+        apps/global_thread_counter.h
+)
+
+add_executable(search_wrapper apps/search_wrapper.cpp
+        hnswlib/bruteforce.h hnswlib/hnswalg.h hnswlib/hnswlib.h 
+        hnswlib/space_ip.h hnswlib/space_l2.h hnswlib/stop_condition.h 
+        hnswlib/visited_list_pool.h
+        utils.hpp
+        TreeHNSW.hpp
+        apps/fanns_survey_helpers.cpp
+        apps/global_thread_counter.h
+)
