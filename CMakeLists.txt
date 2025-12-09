@@ -5,7 +5,9 @@ set(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-SET( CMAKE_CXX_FLAGS  "-O3 -march=native -lrt -DHAVE_CXX0X -fpic -w -fopenmp -ftree-vectorize -ftree-vectorizer-verbose=0 -mavx -mavx512f" )
+# Fixed: Removed -march=native and -mavx512f to avoid "Illegal instruction" crashes in Docker
+# Use portable x86-64 with AVX support instead of native CPU-specific optimizations
+SET( CMAKE_CXX_FLAGS  "-O3 -march=x86-64 -lrt -DHAVE_CXX0X -fpic -w -fopenmp -ftree-vectorize -ftree-vectorizer-verbose=0 -mavx" )
 
 
 option(ENABLE_SSE "Enable SSE support" ON)
