@@ -71,6 +71,9 @@ int main(int argc, char** argv) {
     // Force single-threaded query execution
     omp_set_num_threads(1);
     
+    // DEBUG: Verify thread setting
+    cout << "DEBUG: After omp_set_num_threads(1), omp_get_max_threads() returns: " << omp_get_max_threads() << endl;
+    
     // Start thread monitoring immediately to track query execution
     atomic<bool> done_monitoring(false);
     peak_threads.store(0);  // Reset peak thread counter
