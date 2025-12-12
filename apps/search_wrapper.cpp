@@ -279,8 +279,6 @@ int main(int argc, char** argv) {
         }
     } catch (const exception& e) {
         cerr << "Error during query execution: " << e.what() << endl;
-        done_monitoring = true;
-        monitor_thread.join();
         delete[] data;
         delete[] query;
         delete[] keys;
@@ -289,8 +287,6 @@ int main(int argc, char** argv) {
         return 1;
     } catch (...) {
         cerr << "Unknown error during query execution" << endl;
-        done_monitoring = true;
-        monitor_thread.join();
         delete[] data;
         delete[] query;
         delete[] keys;
