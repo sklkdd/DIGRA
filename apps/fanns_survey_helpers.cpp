@@ -34,30 +34,20 @@ std::vector<std::vector<float>> read_fvecs(const std::string& filename) {
 }
 
 std::vector<std::vector<int>> read_ivecs(const std::string& filename) {
-    std::cout << "DEBUG: read_ivecs() called with: " << filename << std::endl;
     std::ifstream file(filename, std::ios::binary);
-    std::cout << "DEBUG: ifstream created (binary mode)" << std::endl;
     if (!file) {
-        std::cerr << "DEBUG: File failed to open!" << std::endl;
         std::cerr << "Error: Unable to open file for reading.\n";
         return {};
     }
-    std::cout << "DEBUG: File opened successfully" << std::endl;
     std::vector<std::vector<int>> dataset;
-    int count = 0;
     while (file) {
         int d;
         if (!file.read(reinterpret_cast<char*>(&d), sizeof(int))) break;  // Read dimension
         std::vector<int> vec(d);
         if (!file.read(reinterpret_cast<char*>(vec.data()), d * sizeof(int))) break;  // Read vector data
         dataset.push_back(std::move(vec));
-        ++count;
-        if (count % 1000 == 0) {
-            std::cout << "DEBUG: Loaded " << count << " groundtruth entries..." << std::endl;
-        }
     }
     file.close();
-    std::cout << "DEBUG: Finished reading file. Total entries: " << count << std::endl;
     return dataset;
 }
 
@@ -129,60 +119,20 @@ std::vector<std::vector<int>> read_multiple_ints_per_line(const std::string& fil
 }
 
 std::vector<std::pair<int, int>> read_two_ints_per_line(const std::string& filename) {
-    std::cout << "DEBUG: read_two_ints_per_line() called with: " << filename << std::endl;
-    
-    // TEST: Try C-style file reading first
-    std::cout << "DEBUG: Testing C-style file access..." << std::endl;
-    FILE* test_fp = fopen(filename.c_str(), "r");
-    if (test_fp) {
-        char test_buf[256];
-        if (fgets(test_buf, sizeof(test_buf), test_fp)) {
-            std::cout << "DEBUG: C-style read successful, first line: " << test_buf << std::endl;
-        } else {
-            std::cout << "DEBUG: C-style fgets() failed" << std::endl;
-        }
-        fclose(test_fp);
-    } else {
-        std::cout << "DEBUG: C-style fopen() failed" << std::endl;
-    }
-    
-    std::cout << "DEBUG: Creating ifstream..." << std::endl;
-    std::cout.flush();
     std::ifstream file(filename);
-    std::cout << "DEBUG: ifstream created" << std::endl;
-    std::cout.flush();
     if (!file.is_open()) {
-        std::cout << "DEBUG: File failed to open!" << std::endl;
         throw std::runtime_error("Error opening file: " + filename);
     }
-    std::cout << "DEBUG: File opened successfully" << std::endl;
-    std::cout << "DEBUG: file.good() = " << file.good() << std::endl;
-    std::cout << "DEBUG: file.eof() = " << file.eof() << std::endl;
-    std::cout << "DEBUG: file.fail() = " << file.fail() << std::endl;
-    std::cout.flush();
     
     std::vector<std::pair<int, int>> result;
     std::string line;
     int line_number = 0;
     bool first_line = true;
-    std::cout << "DEBUG: Starting while loop to read lines..." << std::endl;
-    std::cout.flush();
     
-    std::cout << "DEBUG: About to call std::getline() for first time..." << std::endl;
-    std::cout.flush();
     while (std::getline(file, line)) {
-        std::cout << "DEBUG: Inside while loop, line " << line_number + 1 << std::endl;
-        std::cout.flush();
         ++line_number;
-        if (line_number == 1) {
-            std::cout << "DEBUG: First line content: [" << line << "]" << std::endl;
-        }
-        if (line_number % 1000 == 0) {
-            std::cout << "DEBUG: Processed " << line_number << " lines..." << std::endl;
-        }
         // Skip empty lines
         if (line.empty()) {
-            std::cout << "DEBUG: Skipping empty line " << line_number << std::endl;
             continue;
         }
         // Check if first line is a header by trying to parse it
@@ -214,7 +164,6 @@ std::vector<std::pair<int, int>> read_two_ints_per_line(const std::string& filen
             throw std::runtime_error("Invalid integer value at line " + std::to_string(line_number));
         }
     }
-    std::cout << "DEBUG: Finished reading file. Total lines: " << line_number << ", result size: " << result.size() << std::endl;
     return result;
 }
 
@@ -242,14 +191,8 @@ void peak_memory_footprint()
 
 void monitor_thread_count(std::atomic<bool>& done) {
     while (!done.load()) {
-        int current = std::thread::hardware_concurrency();
-        #pragma omp parallel
-        {
-            #pragma omp single
-            {
-                current = omp_get_num_threads();
-            }
-        }
+        // Get the configured OpenMP thread limit (not hardware concurrency)
+        int current = omp_get_max_threads();
         int expected = peak_threads.load();
         while (current > expected && !peak_threads.compare_exchange_weak(expected, current)) {}
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
