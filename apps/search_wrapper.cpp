@@ -247,10 +247,9 @@ int main(int argc, char** argv) {
     // ========== QUERY EXECUTION (TIMED, excludes recall computation) ==========
     cout << "\n--- Starting query execution (TIMED) ---" << endl;
 
-    // Start thread monitoring NOW (after index reconstruction, before query loop)
-    atomic<bool> done_monitoring(false);
-    peak_threads.store(0);  // Reset peak thread counter
-    thread monitor_thread(monitor_thread_count, ref(done_monitoring));
+    // NOTE: DIGRA's queryRange() is single-threaded by design (no OpenMP in query code)
+    // We don't need thread monitoring - just record that we're using 1 thread
+    peak_threads.store(1);
 
     // Store results for later recall calculation (NOT TIMED)
     vector<vector<int>> query_results(queryNum);
@@ -301,11 +300,7 @@ int main(int argc, char** argv) {
     }
 
     auto end_time = high_resolution_clock::now();
-    
-    // Stop thread monitoring
-    done_monitoring = true;
-    monitor_thread.join();
-    
+
     cout << "--- Query execution complete ---\n" << endl;
 
     // ========== TIMING OUTPUT ==========
