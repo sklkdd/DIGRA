@@ -191,7 +191,7 @@ void peak_memory_footprint()
 
 void monitor_thread_count(std::atomic<bool>& done) {
     while (!done.load()) {
-        // Get the configured OpenMP thread limit (not hardware concurrency)
+        // Get the current OpenMP thread limit (respects omp_set_num_threads)
         int current = omp_get_max_threads();
         int expected = peak_threads.load();
         while (current > expected && !peak_threads.compare_exchange_weak(expected, current)) {}
