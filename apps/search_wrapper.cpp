@@ -70,14 +70,6 @@ int main(int argc, char** argv) {
 
     // Force single-threaded query execution
     omp_set_num_threads(1);
-    
-    // DEBUG: Verify thread setting
-    cout << "DEBUG: After omp_set_num_threads(1), omp_get_max_threads() returns: " << omp_get_max_threads() << endl;
-    
-    // Start thread monitoring immediately to track query execution
-    atomic<bool> done_monitoring(false);
-    peak_threads.store(0);  // Reset peak thread counter
-    thread monitor_thread(monitor_thread_count, ref(done_monitoring));
 
     cout << "=== DIGRA Query Execution ===" << endl;
     cout << "Data: " << data_path << endl;
@@ -254,6 +246,11 @@ int main(int argc, char** argv) {
 
     // ========== QUERY EXECUTION (TIMED, excludes recall computation) ==========
     cout << "\n--- Starting query execution (TIMED) ---" << endl;
+
+    // Start thread monitoring NOW (after index reconstruction, before query loop)
+    atomic<bool> done_monitoring(false);
+    peak_threads.store(0);  // Reset peak thread counter
+    thread monitor_thread(monitor_thread_count, ref(done_monitoring));
 
     // Store results for later recall calculation (NOT TIMED)
     vector<vector<int>> query_results(queryNum);
