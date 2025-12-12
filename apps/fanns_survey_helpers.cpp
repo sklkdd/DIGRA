@@ -190,11 +190,14 @@ void peak_memory_footprint()
 }
 
 void monitor_thread_count(std::atomic<bool>& done) {
+    std::cout << "DEBUG MONITOR: Starting monitor thread" << std::endl;
     while (!done.load()) {
         // Get the current OpenMP thread limit (respects omp_set_num_threads)
         int current = omp_get_max_threads();
         int expected = peak_threads.load();
+        std::cout << "DEBUG MONITOR: omp_get_max_threads()=" << current << ", peak_threads=" << expected << std::endl;
         while (current > expected && !peak_threads.compare_exchange_weak(expected, current)) {}
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
+    std::cout << "DEBUG MONITOR: Exiting monitor thread, final peak_threads=" << peak_threads.load() << std::endl;
 }
