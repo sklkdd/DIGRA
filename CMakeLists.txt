@@ -35,3 +35,12 @@ add_executable(search_wrapper apps/search_wrapper.cpp
         utils.hpp
         TreeHNSW.hpp
 )
+
+# Combined build+query wrapper (like SeRF) - builds index once and queries with multiple ef_search values
+add_executable(index_construction_and_query_execution apps/index_construction_and_query_execution.cpp
+        hnswlib/bruteforce.h hnswlib/hnswalg.h hnswlib/hnswlib.h 
+        hnswlib/space_ip.h hnswlib/space_l2.h hnswlib/stop_condition.h 
+        hnswlib/visited_list_pool.h
+        utils.hpp
+        TreeHNSW.hpp
+)
