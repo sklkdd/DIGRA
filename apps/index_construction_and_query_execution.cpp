@@ -76,7 +76,16 @@ int main(int argc, char** argv) {
     int threads = stoi(argv[11]);
 
     // Set number of threads for construction
-    omp_set_num_threads(threads);
+    // NOTE: DIGRA's index construction (buildTree() in TreeHNSW.hpp) is INHERENTLY SEQUENTIAL.
+    // The buildTree function uses std::queue-based level-by-level tree construction with no
+    // OpenMP parallel directives (#pragma omp parallel). Setting omp_set_num_threads() here
+    // has NO EFFECT on index construction because the code doesn't use OpenMP for parallelism.
+    // 
+    // This is a fundamental limitation of the DIGRA algorithm implementation, not a configuration
+    // issue. The tree structure is built sequentially by design.
+    //
+    // Query execution also appears to be single-threaded in this implementation.
+    omp_set_num_threads(threads);  // Note: Ineffective for DIGRA's sequential buildTree()
     
     cout << "=== DIGRA Index Construction and Query Execution ===" << endl;
     cout << "Data: " << data_fvecs << endl;
@@ -88,7 +97,7 @@ int main(int argc, char** argv) {
     cout << "ef_search values: ";
     for (int ef : ef_search_list) cout << ef << " ";
     cout << endl;
-    cout << "Threads: " << threads << endl;
+    cout << "Threads: " << threads << " (Note: DIGRA's index construction is inherently sequential)" << endl;
 
     // ========== DATA LOADING (NOT TIMED) ==========
     cout << "\nLoading data..." << endl;
